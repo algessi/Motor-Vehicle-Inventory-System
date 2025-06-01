@@ -41,11 +41,16 @@ function setupFormSubmissions() {
     loginForm.addEventListener('submit', function(e) {
       e.preventDefault();
       
-      const username = this.querySelector('#username').value;
+      const email = this.querySelector('#email').value;
       const password = this.querySelector('#password').value;
       
-      if (!username || !password) {
-        showError(this, 'Please enter both username and password');
+      if (!email || !password) {
+        showError(this, 'Please enter both email and password');
+        return;
+      }
+      
+      if (!validateEmail(email)) {
+        showError(this, 'Please enter a valid email address');
         return;
       }
       
@@ -57,7 +62,7 @@ function setupFormSubmissions() {
       
       // Send AJAX request to PHP backend
       const formData = new FormData();
-      formData.append('username', username);
+      formData.append('email', email);
       formData.append('password', password);
       
       fetch('php/login.php', {
@@ -68,6 +73,7 @@ function setupFormSubmissions() {
       .then(data => {
         if (data.trim() === 'success') {
           localStorage.setItem('isLoggedIn', 'true');
+          localStorage.setItem('userEmail', email);
           window.location.href = 'php/dashboard.php';
         } else {
           showError(loginForm, data);
@@ -91,10 +97,9 @@ function setupFormSubmissions() {
       
       const fullname = this.querySelector('#reg-fullname').value;
       const email = this.querySelector('#reg-email').value;
-      const username = this.querySelector('#reg-username').value;
       const password = this.querySelector('#reg-password').value;
       
-      if (!fullname || !email || !username || !password) {
+      if (!fullname || !email || !password) {
         showError(this, 'All fields are required');
         return;
       }
@@ -117,7 +122,6 @@ function setupFormSubmissions() {
       const formData = new FormData();
       formData.append('fullname', fullname);
       formData.append('email', email);
-      formData.append('username', username);
       formData.append('password', password);
       
       fetch('php/register.php', {
@@ -166,12 +170,29 @@ function setupFormSubmissions() {
       submitButton.disabled = true;
       spinner.style.display = 'block';
       
-      setTimeout(() => {
-        alert(`Password reset instructions have been sent to ${email}`);
+      const formData = new FormData();
+      formData.append('email', email);
+      
+      fetch('php/reset_password.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.text())
+      .then(data => {
+        if (data.trim() === 'success') {
+          alert('Password reset instructions have been sent to your email.');
+          showLogin();
+        } else {
+          showError(forgotPasswordForm, data);
+        }
         submitButton.disabled = false;
         spinner.style.display = 'none';
-        showLogin();
-      }, 1000);
+      })
+      .catch(error => {
+        showError(forgotPasswordForm, 'An error occurred. Please try again.');
+        submitButton.disabled = false;
+        spinner.style.display = 'none';
+      });
     });
   }
 }
@@ -215,9 +236,9 @@ document.addEventListener('DOMContentLoaded', () => {
   setupPasswordToggles();
   setupFormSubmissions();
   
-  // Set focus on username field
-  const usernameInput = document.getElementById('username');
-  if (usernameInput) {
-    usernameInput.focus();
+  // Set focus on email field
+  const emailInput = document.getElementById('email');
+  if (emailInput) {
+    emailInput.focus();
   }
 });

@@ -3,11 +3,11 @@ session_start();
 require 'db.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username'];
+    $email = $_POST['email'];
     $password = $_POST['password'];
 
-    $stmt = $conn->prepare("SELECT id, password FROM users WHERE username = ?");
-    $stmt->bind_param("s", $username);
+    $stmt = $conn->prepare("SELECT id, password, fullname FROM users WHERE email = ?");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $result = $stmt->get_result();
 
@@ -16,13 +16,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if (password_verify($password, $row['password'])) {
             $_SESSION['isLoggedIn'] = true;
             $_SESSION['userId'] = $row['id'];
-            $_SESSION['username'] = $username;
+            $_SESSION['userEmail'] = $email;
+            $_SESSION['fullname'] = $row['fullname'];
             echo "success";
         } else {
             echo "Incorrect password!";
         }
     } else {
-        echo "User not found!";
+        echo "Email not found!";
     }
     $stmt->close();
 } else {
