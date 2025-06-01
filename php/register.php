@@ -6,11 +6,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
   // Get form data
   $fullname = $_POST['fullname'];
   $email = $_POST['email'];
-  $username = $_POST['username'];
   $password = $_POST['password'];
 
   // Validate input
-  if (empty($fullname) || empty($email) || empty($username) || empty($password)) {
+  if (empty($fullname) || empty($email) || empty($password)) {
     echo "All fields are required";
     exit;
   }
@@ -31,22 +30,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     exit;
   }
 
-  // Check if username or email already exists
-  $stmt = $conn->prepare("SELECT id FROM users WHERE username=? OR email=?");
-  $stmt->bind_param("ss", $username, $email);
+  // Check if email already exists
+  $stmt = $conn->prepare("SELECT id FROM users WHERE email=?");
+  $stmt->bind_param("s", $email);
   $stmt->execute();
   $stmt->store_result();
 
   if ($stmt->num_rows > 0) {
-    echo "User already exists with this username or email";
+    echo "An account with this email already exists";
     $stmt->close();
   } else {
     // Hash the password
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
     
     // Insert new user
-    $insert_stmt = $conn->prepare("INSERT INTO users (fullname, email, username, password) VALUES (?, ?, ?, ?)");
-    $insert_stmt->bind_param("ssss", $fullname, $email, $username, $hashed_password);
+    $insert_stmt = $conn->prepare("INSERT INTO users (fullname, email, password) VALUES (?, ?, ?)");
+    $insert_stmt->bind_param("sss", $fullname, $email, $hashed_password);
     
     if ($insert_stmt->execute()) {
       echo "success";
